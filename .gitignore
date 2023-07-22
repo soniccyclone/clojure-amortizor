@@ -1,5 +1,5 @@
 /target
-/classes
+/classes/[^.gitkeep]*
 /checkouts
 profiles.clj
 pom.xml
