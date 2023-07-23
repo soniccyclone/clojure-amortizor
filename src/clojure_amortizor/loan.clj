@@ -8,7 +8,7 @@
    :principal-balance principal-balance
    :accrued-interest accrued-interest
    :minimum-monthly-payment minimum-monthly-payment
-   :loan-state :active})
+   :active true})
 
 (defn calculate-daily-interest
   [{:keys [interest-rate principal-balance] :as loan}]
