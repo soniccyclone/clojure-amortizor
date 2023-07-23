@@ -2,7 +2,7 @@
   (:require [nixnomad.brain.core :refer [spark]]
             [clojure-amortizor.loan :refer :all]
             [clojure-amortizor.person :refer :all]
-            [clojure.java-time :as jt])
+            [java-time.api :as jt])
   (:gen-class))
 
 (defn process-raise

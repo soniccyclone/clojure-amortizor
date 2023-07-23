@@ -1,4 +1,4 @@
 {:deps
  {com.git.sr.ht.nixnomad/brain {:git/url "https://git.sr.ht/~nixnomad/brain"
-                                :sha "a6baf201d59898a774327cf81da05d6183ffb8bd"}}
- clojure.java-time/clojure.java-time       {:mvn/version "1.2.0"}}
+                                :sha "a6baf201d59898a774327cf81da05d6183ffb8bd"}
+  clojure.java-time/clojure.java-time {:mvn/version "1.2.0"}}}
