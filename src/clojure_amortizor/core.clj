@@ -16,9 +16,45 @@
     (process-raise person)
     person))
 
+(defn accrue-interest
+  [loans]
+  (map (fn [{:keys [accrued-interest principal-balance interest-rate] :as loan}]
+         (assoc loan :accrued-interest
+                (->> interest-rate
+                     (* principal-balance)
+                     (+ accrued-interest))))
+       loans))
+
+(defn bounce-extra-loan-payments
+  "Mutually recursive function that marks loans with an extra-payment that can be
+   made on them given the extra payment that can be made"
+  [extra-payment bounced-loans bouncing-loans]
+  (if (empty? bouncing-loans) bounced-loans
+      (let [loan (first bouncing-loans)
+            leftover-principal-balance (-  (+ (:principal-balance loan)
+                                              (:accrued-interest loan))
+                                           (:minimum-monthly-payment loan))
+            leftover-extra-payment (- leftover-principal-balance extra-payment)]
+        (if (neg? leftover-extra-payment)
+          ;; This loan will be fully paid off by the extra payment with extra leftover
+          #(bounce-extra-loan-payments
+            (abs leftover-extra-payment)
+            (concat bounced-loans (assoc loan :extra-payment leftover-principal-balance))
+            (rest bouncing-loans))
+          ;; Else we have used up all of the extra loan-payment, so mark the amount
+          ;; to pay extra on the loan and then return the loans
+          (concat bounced-loans (assoc loan :extra-payment extra-payment) (rest bouncing-loans))))))
+
+(defn setup-extra-loan-payments
+  "Takes a list of loans and appends extra payment information to them, adhering to the snowball repayment strategy"
+  [{:keys [loans extra-loan-payment] :as person}]
+  (assoc person :loans
+         (trampoline #(bounce-extra-loan-payments extra-loan-payment '() loans))))
+
 (defn process-month
-  [{:keys [extra-loan-payment loans salary]} month]
-  (list extra-loan-payment loans salary month))
+  [person month]
+  ;; 
+  )
 
 (defn run-handler [{:keys [run-handler data-bag]}]
   (let [{:keys [fps counter counter-print-step]} data-bag]
@@ -40,7 +76,7 @@
 
 (comment
   (let [loan (create-loan "test-loan" 0.025 100 0 5)
-        inactive-loan (dissoc (create-loan "bad-loan" 0.025 99 0 5) :activ)
+        inactive-loan (dissoc (create-loan "inactive-loan" 0.025 99 0 5) :activ)
         loans [loan inactive-loan]
         person (create-person 100 loans 100 1 0.03 1)]
     (process-month person "teetoo")
@@ -54,8 +90,25 @@
             loans)
     (find-loan-for-extra-payment loans)
     (apply min (map :principal-balance loans))
+    (total-debt person)
+    (sort-by :principal-balance loans)
+    loans
+    (map #(assoc % :accrued-interest
+                 (+ (:accrued-interest %) (* (:principal-balance %) (:interest-rate %))))
+         loans)
+    (map (fn [{:keys [accrued-interest principal-balance interest-rate] :as loan}]
+           (assoc loan :accrued-interest
+                  (->> interest-rate
+                       (* principal-balance)
+                       (+ accrued-interest))))
+         loans)
 
-    (total-debt person))
+
+    (let [ordered-loans (sort-by :principal-balance loans)]
+      (trampoline #((let [loan (first ordered-loans)
+                          leftover-principal-balance (- (:minimum-monthly-payment loan)
+                                                        (+ (:principal-balance loan)
+                                                           (:accrued-interest loan)))])))))
 
 
   (def v [1 2 3 4 0 5])
