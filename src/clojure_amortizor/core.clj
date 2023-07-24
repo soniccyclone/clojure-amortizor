@@ -39,11 +39,11 @@
           ;; This loan will be fully paid off by the extra payment with extra leftover
           #(bounce-extra-loan-payments
             (abs leftover-extra-payment)
-            (concat bounced-loans (assoc loan :extra-payment leftover-principal-balance))
+            (concat bounced-loans (list (assoc loan :extra-payment leftover-principal-balance)))
             (rest bouncing-loans))
           ;; Else we have used up all of the extra loan-payment, so mark the amount
           ;; to pay extra on the loan and then return the loans
-          (concat bounced-loans (assoc loan :extra-payment extra-payment) (rest bouncing-loans))))))
+          (concat bounced-loans (list (assoc loan :extra-payment extra-payment)) (rest bouncing-loans))))))
 
 (defn setup-extra-loan-payments
   "Takes a list of loans and appends extra payment information to them, adhering to the snowball repayment strategy"
@@ -77,7 +77,7 @@
 (comment
   (let [loan (create-loan "test-loan" 0.025 100 0 5)
         inactive-loan (dissoc (create-loan "inactive-loan" 0.025 99 0 5) :activ)
-        loans [loan inactive-loan]
+        loans (list loan inactive-loan)
         person (create-person 100 loans 100 1 0.03 1)]
     (process-month person "teetoo")
     (->> loan
@@ -102,13 +102,10 @@
                        (* principal-balance)
                        (+ accrued-interest))))
          loans)
-
-
-    (let [ordered-loans (sort-by :principal-balance loans)]
-      (trampoline #((let [loan (first ordered-loans)
-                          leftover-principal-balance (- (:minimum-monthly-payment loan)
-                                                        (+ (:principal-balance loan)
-                                                           (:accrued-interest loan)))])))))
+    person
+    (accrue-interest loans)
+    (process-salary person 1)
+    (setup-extra-loan-payments person))
 
 
   (def v [1 2 3 4 0 5])
